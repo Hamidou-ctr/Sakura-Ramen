@@ -1,4 +1,3 @@
-/* Allgemeine Stile */
 
 * {
   margin: 0;
@@ -324,13 +323,6 @@ table tr td {
   .menu-item__prices {
     font-size: 6vw;
   }
-
-/*   .menu-item__price-row {
-    width: 100%;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-start;
-  } */
 
   table tr td {
     font-size: 6vw;
