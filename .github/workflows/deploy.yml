@@ -1,0 +1,63 @@
+name: 🚀 Deploy to Sakura Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Ermöglicht manuelles Auslösen
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📦 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🔑 Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        # SSH Host Key zum trusted hosts hinzufügen
+        ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+        # Test SSH Verbindung
+        echo "Testing SSH connection..."
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "echo 'SSH connection successful!'"
+    
+    - name: 📁 Create Directory Structure (if needed)
+      run: |
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+          ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+          "mkdir -p ${{ secrets.DEPLOY_PATH }} && chmod -R 755 ${{ secrets.DEPLOY_PATH }}"
+    
+    - name: 🔄 Sync Files with rsync
+      run: |
+        echo "Syncing files to server..."
+        rsync -avz --delete \
+          -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='.DS_Store' \
+          --exclude='deploy.yml' \
+          ./ \
+          ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
+    
+    - name: ✅ Verify Deployment
+      run: |
+        echo "Verifying deployed files..."
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+          ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+          "ls -la ${{ secrets.DEPLOY_PATH }}/ && echo 'Deployment completed successfully!'"
+    
+    - name: 📊 Deployment Summary
+      run: |
+        echo "🚀 Deployment Summary:"
+        echo "✅ Repository: ${{ github.repository }}"
+        echo "✅ Branch: ${{ github.ref }}"
+        echo "✅ Commit: ${{ github.sha }}"
+        echo "✅ Server: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
+        echo "✅ Path: ${{ secrets.DEPLOY_PATH }}"
+        echo "✅ Website: https://sakura.hamidoudiallo.de"
