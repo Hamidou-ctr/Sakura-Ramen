@@ -11,13 +11,12 @@ html {
 }
 
 body {
-  background-color: #f8f5f2;
+  background-color: #ededec;
   color: #333;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  background-color: rgb(127, 157, 240);
 }
 
 
